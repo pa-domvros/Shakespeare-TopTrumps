@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shakespeare Top Trumps – Smartboard (v8, Light Cinnamon)</title>
+<style>
+  /* ===== Light Cinnamon Theme ===== */
+  :root{
+    --bg1:#fff6ed; --bg2:#ffe9d2; --ink:#2a1a12; --ink-soft:#553b2b;
+    --tile1:#f6d9bf; --tile2:#f4caa5; --tile3:#ffd9b3; --tile4:#f0b78e; --tile5:#eebf99; --tile6:#f3c7a6;
+    --card:#fffdf9; --stat-bg:#fbe7d6; --stat-brd:#efcdb1;
+    --accent:#c57a36; --accent-strong:#9d5b22; --gold:#d59a4a; --ok:#268c4f; --warn:#b87a13; --danger:#b6463e;
+    --panel:rgba(255, 250, 244, .85); --panel-brd:#f2d7bf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,sans-serif;color:var(--ink);
+    background:radial-gradient(1200px 800px at 80% -10%, var(--bg2) 0%, var(--bg1) 60%), linear-gradient(180deg, #fffaf3, var(--bg1));}
+  .wrap{max-width:1320px;margin:0 auto;padding:16px}
+  h1{margin:0 0 6px;font-size:28px;letter-spacing:.3px}
+  .sub{color:var(--ink-soft);margin-bottom:8px}
+  .credit-inline{margin:6px 0 14px;text-align:center;font-weight:800;color:#6b3f20;background:#fff7ea;border:1px solid #edc9a9;padding:8px 12px;border-radius:12px}
+  .panel{background:var(--panel);border:1px solid var(--panel-brd);border-radius:16px;padding:12px;backdrop-filter:blur(6px)}
+
+  /* Controls */
+  .controls{display:grid;grid-template-columns:1fr;gap:10px}
+  @media(min-width:900px){.controls{grid-template-columns:1.1fr 2fr 1fr}}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  label{font-size:14px;color:var(--ink-soft)}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:#fffaf2;border:1px solid var(--panel-brd);padding:6px 10px;border-radius:999px;color:var(--ink)}
+  .btn, select, input[type="text"]{font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid var(--panel-brd);background:#fffaf2;color:var(--ink)}
+  .btn{cursor:pointer}.btn.primary{background:var(--gold);color:#2b1900;border:none;font-weight:800}
+  .btn.warn{background:#ffd585;color:#3a2600;border:none;font-weight:800}
+  .btn.danger{background:#ffd4cf;color:#4b0e0a;border:1px solid #f3a39b;font-weight:800}
+  .btn.ghost{background:#fffdf8}.btn:disabled{opacity:.55;cursor:not-allowed}
+  .teamcount{display:inline-flex;align-items:center;gap:6px;background:#fffdf8;border:1px solid var(--panel-brd);border-radius:999px;padding:4px 8px}
+  .teamcount button{width:36px;height:36px;border-radius:10px}
+  .teamcount select{appearance:none;background:transparent;border:none;color:var(--ink);font-weight:800;padding:6px 8px;outline:none;cursor:pointer}
+
+  /* Info */
+  .info-btn{position:fixed; right:16px; top:16px; width:50px; height:50px; border-radius:50%; background:var(--accent); color:#fff; font-weight:900; border:none; cursor:pointer; box-shadow:0 8px 18px rgba(0,0,0,.15); z-index:100}
+  .info-btn:hover{ background:var(--accent-strong) }
+  .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:99; }
+  .modal.open{ display:flex; }
+  .backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.25); }
+  .sheet{ position:relative; max-width:900px; max-height:80vh; overflow:auto; background:#fffdf9; color:var(--ink); border:2px solid var(--panel-brd); border-radius:18px; padding:18px; box-shadow:0 20px 40px rgba(0,0,0,.25) }
+  .sheet h2{ margin:6px 0 8px } .sheet h3{ margin:12px 0 6px } .sheet ul{ margin:6px 0 12px 20px }
+  .closeX{ position:absolute; top:8px; right:8px; width:40px; height:40px; border-radius:50%; border:1px solid var(--panel-brd); background:#fffaf2; color:var(--ink); font-size:20px; font-weight:900; cursor:pointer }
+
+  /* Layout */
+  .layout{margin-top:12px;display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:1100px){.layout{grid-template-columns:1fr 320px}}
+  .potbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .legend{display:flex;gap:8px;flex-wrap:wrap}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#fffdf8;border:1px solid var(--panel-brd);font-size:14px;color:var(--ink)}
+
+  .board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media(min-width:900px){.board{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+  /* Team tiles */
+  .teambox{position:relative;padding-top:38px;border-radius:16px;overflow:hidden;border:1px solid #e9cdb4;box-shadow:0 8px 20px rgba(0,0,0,.15)}
+  .teamhdr{position:absolute;top:6px;left:8px;right:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:12px;background:#fffdf9;color:var(--ink);border:1px solid var(--panel-brd);font-weight:900;font-size:14px}
+  .hdr-left{display:flex;align-items:center;gap:8px}
+  .countBig{font-weight:900;padding:2px 10px;border-radius:999px;background:#fff7ea;color:#4a2c1a;border:1px solid #edc9a9}
+  .turn{outline:3px solid var(--gold);outline-offset:3px}
+  .out{opacity:.35;filter:grayscale(.3)}
+
+  .card{margin:10px;background:var(--card);color:var(--ink);border-radius:18px;padding:12px;min-height:250px;box-shadow:0 6px 18px rgba(0,0,0,.12);display:grid;grid-template-rows:auto auto 1fr;gap:8px;border:1px solid #edd4bb}
+  .card-title{font-weight:900;font-size:20px;display:flex;justify-content:space-between;align-items:center}
+  .tag{font-size:12px;padding:2px 8px;border-radius:999px;background:#ffe7cf;color:#5a3719;border:1px solid #f0c9a3}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat{border:1px solid var(--stat-brd);border-radius:12px;padding:10px;display:flex;justify-content:space-between;gap:8px;background:var(--stat-bg);font-weight:800;cursor:pointer}
+  .stat.active{background:var(--accent);color:#fff;border-color:var(--accent-strong)}
+  .stat.winner{outline:3px solid var(--ok)}
+  .card-back{margin:10px;min-height:250px;border-radius:18px;background:linear-gradient(135deg,#fff2e1,#fffdf9);display:grid;place-items:center;color:#5a1f08;font-weight:900;box-shadow:0 6px 18px rgba(0,0,0,.12);border:1px solid #edd4bb}
+  .foot{font-size:12px;color:var(--ink-soft)}
+
+  .winner,.tie{padding:10px 12px;border-radius:12px;font-weight:800}
+  .winner{background:#e9f8ef;border:1px solid #bfe7ce;color:#124d2d}
+  .tie{background:#fff6db;border:1px solid #f1d991;color:#6b4a0d}
+
+  .side{display:grid;gap:10px}
+  .side h3{margin:0;font-size:16px;color:var(--ink)}
+  .catbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .catbtns button{background:var(--accent);color:#fff;border:1px solid var(--accent-strong);border-radius:12px;padding:10px;font-weight:900;cursor:pointer}
+
+  .log{margin-top:6px;height:110px;overflow:auto;background:#fffaf2;border:1px solid var(--panel-brd);border-radius:10px;padding:8px;font-size:12px;color:var(--ink)}
+  .scoreboard{display:grid;gap:8px}
+  .scoreRow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fffdf8;border:1px solid var(--panel-brd);border-radius:12px;padding:8px}
+  .scoreLeft{display:flex;align-items:center;gap:10px}
+  .swatch{width:18px;height:18px;border-radius:4px;border:1px solid #dcb792}
+  .pill{font-weight:900;background:#fff7ea;border:1px solid #edc9a9;border-radius:999px;padding:4px 10px;color:var(--ink)}
+
+  footer{margin:16px auto 24px;max-width:1320px;text-align:center;font-weight:800;color:#6b3f20;background:#fff7ea;border:1px solid #edc9a9;padding:12px;border-radius:12px}
+</style>
+</head>
+<body>
+<button class="info-btn" id="infoBtn" aria-label="Instructions">i</button>
+
+<div class="wrap">
+  <h1>Shakespeare Top Trumps</h1>
+  <div class="sub">Flow: <b>Start → pick a stat on the active card → Reveal & Resolve → Next Round</b>. Scoreboard shows cards collected.</div>
+  <div class="credit-inline">✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨</div>
+
+  <!-- Controls -->
+  <div class="panel controls">
+    <div class="row">
+      <div class="pill">
+        <strong>Teams</strong>
+        <span class="teamcount">
+          <button class="btn" id="decTeams" title="Fewer">−</button>
+          <select id="teamCount" title="Team count">
+            <option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option>
+          </select>
+          <button class="btn" id="incTeams" title="More">+</button>
+        </span>
+      </div>
+      <button class="btn" id="randomizeColors">Shuffle Tile Colors</button>
+    </div>
+
+    <div class="row" id="teamEdit"></div>
+
+    <div class="row" style="justify-content:flex-end;">
+      <button class="btn warn" id="importBtn">Import Deck (JSON)</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none" />
+      <button class="btn primary" id="startBtn">Start Game</button>
+      <button class="btn danger" id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="layout">
+
+    <!-- Left: Board -->
+    <div class="panel">
+      <div class="potbar">
+        <div class="legend">
+          <span class="badge">Active team:</span>
+          <strong id="activeTeamName">—</strong>
+        </div>
+        <div class="legend">
+          <span class="badge">Pot <strong id="potCount">0</strong></span>
+          <span class="badge">Unused <strong id="unusedCount">0</strong></span>
+          <span class="badge">Round <strong id="roundNum">0</strong></span>
+          <span class="badge">Deck Size <strong id="deckSize">25</strong></span>
+        </div>
+      </div>
+
+      <div class="board" id="teamsArea"></div>
+
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <div id="status" class="winner" style="display:none;"></div>
+        <div id="statusTie" class="tie" style="display:none;"></div>
+        <button id="revealBtn" class="btn primary" disabled>Reveal & Resolve</button>
+        <button id="nextBtn" class="btn" disabled>Next Round</button>
+      </div>
+
+      <div class="log" id="logBox"></div>
+    </div>
+
+    <!-- Right: Side (categories + scoreboard) -->
+    <div class="panel side">
+      <h3>Choose a category</h3>
+      <div class="catbtns" id="categoryButtons"></div>
+
+      <h3 style="margin-top:8px;">Scoreboard</h3>
+      <div class="scoreboard" id="scoreboard"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Instructions Modal -->
+<div class="modal" id="infoModal" aria-hidden="true" role="dialog">
+  <div class="backdrop" id="infoBackdrop"></div>
+  <div class="sheet" role="document" aria-label="How to play">
+    <button class="closeX" id="infoClose" aria-label="Close">×</button>
+    <h2>How to play – Shakespeare Top Trumps</h2>
+    <p>Classroom, smartboard-friendly comparison game. The goal is to win cards by choosing the strongest category on your top card.</p>
+
+    <h3>Setup</h3>
+    <ul>
+      <li>Pick <b>2–6 teams</b> and edit team names if you wish.</li>
+      <li>Optional: <b>Import Deck (JSON)</b> to use your own cards.</li>
+      <li>Press <b>Start Game</b>. Cards are shuffled and dealt evenly. <b>One card may be set aside as “Unused”</b> unless there are 5 teams.</li>
+    </ul>
+
+    <h3>Turn flow</h3>
+    <ol>
+      <li>The <b>active team</b> sees their top card (others are face down).</li>
+      <li>They <b>tap a stat</b> on their card or use the category buttons on the right.</li>
+      <li>Press <b>Reveal &amp; Resolve</b> to flip and compare. Highest value wins; a tie sends cards to the <b>Pot</b>.</li>
+      <li>Press <b>Next Round</b>. The winner becomes the next chooser.</li>
+    </ol>
+
+    <h3>Buttons & UI</h3>
+    <ul>
+      <li><b>Teams –/+/dropdown:</b> set 2–6 teams before starting.</li>
+      <li><b>Shuffle Tile Colors:</b> randomizes team tile background colors.</li>
+      <li><b>Import Deck (JSON):</b> load your own cards.</li>
+      <li><b>Start Game:</b> shuffles and deals the deck; begins Round 1.</li>
+      <li><b>Reset:</b> returns to the default deck and clears the board.</li>
+      <li><b>Category buttons (right panel):</b> an alternative to tapping the card.</li>
+      <li><b>Reveal &amp; Resolve:</b> flips all top cards and determines winner/tie.</li>
+      <li><b>Next Round:</b> advances to the next round.</li>
+      <li><b>Pot / Unused / Round / Deck Size:</b> indicators at the top of the board.</li>
+    </ul>
+  </div>
+</div>
+
+<footer>✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨</footer>
+
+<script>
+/* 25-card Default Deck */
+var DEFAULT_DECK = [
+  { name:"Hamlet", set:"Tragedy", stats:{ Wit:92, Courage:65, TragicFate:100, Romance:50, Deceit:30, Influence:95 } },
+  { name:"Ophelia", set:"Tragedy", stats:{ Wit:60, Courage:40, TragicFate:95, Romance:70, Deceit:15, Influence:50 } },
+  { name:"Claudius", set:"Tragedy", stats:{ Wit:80, Courage:55, TragicFate:60, Romance:20, Deceit:98, Influence:88 } },
+  { name:"Gertrude", set:"Tragedy", stats:{ Wit:70, Courage:50, TragicFate:70, Romance:40, Deceit:35, Influence:65 } },
+  { name:"Macbeth", set:"Tragedy", stats:{ Wit:78, Courage:90, TragicFate:92, Romance:25, Deceit:85, Influence:93 } },
+  { name:"Lady Macbeth", set:"Tragedy", stats:{ Wit:88, Courage:80, TragicFate:85, Romance:20, Deceit:95, Influence:90 } },
+  { name:"Banquo", set:"Tragedy", stats:{ Wit:72, Courage:85, TragicFate:80, Romance:20, Deceit:20, Influence:60 } },
+  { name:"King Lear", set:"Tragedy", stats:{ Wit:68, Courage:70, TragicFate:90, Romance:15, Deceit:25, Influence:92 } },
+  { name:"Cordelia", set:"Tragedy", stats:{ Wit:85, Courage:75, TragicFate:88, Romance:40, Deceit:5,  Influence:78 } },
+  { name:"Iago", set:"Tragedy", stats:{ Wit:94, Courage:65, TragicFate:40, Romance:15, Deceit:100,Influence:89 } },
+  { name:"Othello", set:"Tragedy", stats:{ Wit:75, Courage:95, TragicFate:85, Romance:45, Deceit:20, Influence:85 } },
+  { name:"Desdemona", set:"Tragedy", stats:{ Wit:78, Courage:60, TragicFate:92, Romance:70, Deceit:8,  Influence:70 } },
+  { name:"Romeo", set:"Tragedy", stats:{ Wit:65, Courage:70, TragicFate:90, Romance:98, Deceit:15, Influence:72 } },
+  { name:"Juliet", set:"Tragedy", stats:{ Wit:82, Courage:75, TragicFate:95, Romance:97, Deceit:10, Influence:76 } },
+  { name:"Tybalt", set:"Tragedy", stats:{ Wit:55, Courage:88, TragicFate:80, Romance:20, Deceit:25, Influence:58 } },
+  { name:"Prospero", set:"Romance", stats:{ Wit:96, Courage:60, TragicFate:30, Romance:45, Deceit:40, Influence:90 } },
+  { name:"Miranda", set:"Romance", stats:{ Wit:70, Courage:55, TragicFate:20, Romance:80, Deceit:5,  Influence:65 } },
+  { name:"Caliban", set:"Romance", stats:{ Wit:45, Courage:70, TragicFate:50, Romance:10, Deceit:35, Influence:55 } },
+  { name:"Puck", set:"Comedy", stats:{ Wit:99, Courage:40, TragicFate:10, Romance:75, Deceit:85, Influence:70 } },
+  { name:"Viola", set:"Comedy", stats:{ Wit:88, Courage:80, TragicFate:20, Romance:85, Deceit:70, Influence:75 } },
+  { name:"Malvolio", set:"Comedy", stats:{ Wit:68, Courage:40, TragicFate:35, Romance:30, Deceit:25, Influence:55 } },
+  { name:"Beatrice", set:"Comedy", stats:{ Wit:98, Courage:70, TragicFate:15, Romance:82, Deceit:35, Influence:72 } },
+  { name:"Benedick", set:"Comedy", stats:{ Wit:92, Courage:75, TragicFate:15, Romance:78, Deceit:30, Influence:70 } },
+  { name:"Shylock", set:"Comedy", stats:{ Wit:85, Courage:65, TragicFate:70, Romance:20, Deceit:45, Influence:88 } },
+  { name:"Portia", set:"Comedy", stats:{ Wit:95, Courage:70, TragicFate:25, Romance:55, Deceit:60, Influence:92 } }  /* 25th card */
+];
+
+/* Utilities */
+var TILE_COLORS=[ getVar('--tile1'), getVar('--tile2'), getVar('--tile3'), getVar('--tile4'), getVar('--tile5'), getVar('--tile6') ];
+function getVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=(Math.random()*(i+1))|0;var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function el(id){return document.getElementById(id)}
+function log(msg){var lb=el('logBox'); lb.innerHTML += msg+"<br/>"; lb.scrollTop = lb.scrollHeight;}
+
+/* State */
+var deck=[], categoryKeys=[];
+var numTeams=4, teams=[], activeTeam=0, pot=[], roundNum=0, revealed=false, chosenCategory=null, inPlay=false;
+var unused=[];
+
+/* Elements */
+var teamCountEl=el('teamCount'), decBtn=el('decTeams'), incBtn=el('incTeams'), teamEditEl=el('teamEdit');
+var startBtn=el('startBtn'), resetBtn=el('resetBtn'), importBtn=el('importBtn'), fileInput=el('fileInput'), randomBtn=el('randomizeColors');
+var activeTeamNameEl=el('activeTeamName'), potCountEl=el('potCount'), roundNumEl=el('roundNum'), deckSizeEl=el('deckSize'), unusedEl=el('unusedCount');
+var teamsAreaEl=el('teamsArea'), categoryButtonsEl=el('categoryButtons');
+var revealBtn=el('revealBtn'), nextBtn=el('nextBtn'), statusEl=el('status'), statusTieEl=el('statusTie'), scoreboardEl=el('scoreboard');
+
+/* Info modal */
+var infoBtn=el('infoBtn'), infoModal=el('infoModal'), infoClose=el('infoClose'), infoBackdrop=el('infoBackdrop');
+
+/* Setup UI builders */
+function rebuildTeamEditors(){
+  teamEditEl.innerHTML='';
+  for(var i=0;i<numTeams;i++){
+    var wrap=document.createElement('div'); wrap.className='pill';
+    var sw=document.createElement('span'); sw.className='swatch'; sw.style.background=TILE_COLORS[i%TILE_COLORS.length];
+    var input=document.createElement('input'); input.type='text'; input.placeholder='Team '+(i+1); input.value=(teams[i]&&teams[i].name)||('Team '+(i+1));
+    input.oninput=(function(ix,inp){return function(){ if(teams[ix]) teams[ix].name=inp.value||('Team '+(ix+1)); renderHUD(); renderScoreboard(); };})(i,input);
+    wrap.appendChild(sw); wrap.appendChild(input); teamEditEl.appendChild(wrap);
+  }
+}
+function buildCategoryButtons(){
+  categoryButtonsEl.innerHTML='';
+  for(var i=0;i<categoryKeys.length;i++){
+    (function(k){
+      var b=document.createElement('button'); b.textContent=k;
+      b.onclick=function(){ selectCategory(k); };
+      categoryButtonsEl.appendChild(b);
+    })(categoryKeys[i]);
+  }
+}
+
+/* Rendering */
+function renderHUD(){
+  activeTeamNameEl.textContent = inPlay ? (teams[activeTeam]?teams[activeTeam].name:'—') : '—';
+  potCountEl.textContent = pot.length; roundNumEl.textContent = roundNum; deckSizeEl.textContent = deck.length; unusedEl.textContent = unused.length;
+}
+function statDiv(key, value, clickable){
+  var st=document.createElement('div'); st.className='stat'; if(clickable) st.title='Tap to choose '+key;
+  var s1=document.createElement('span'); s1.textContent=key; var s2=document.createElement('span'); s2.textContent=value;
+  st.appendChild(s1); st.appendChild(s2); return st;
+}
+function renderTeams(){
+  teamsAreaEl.innerHTML='';
+  for(var idx=0; idx<teams.length; idx++){
+    var team=teams[idx];
+    var box=document.createElement('div'); box.className='teambox';
+    box.style.background = TILE_COLORS[idx%TILE_COLORS.length];
+    box.style.backgroundImage = 'linear-gradient(180deg, rgba(255,255,255,.25), rgba(0,0,0,.05))';
+    if(inPlay && idx===activeTeam) box.classList.add('turn'); if(team.hand.length===0) box.classList.add('out');
+
+    var hdr=document.createElement('div'); hdr.className='teamhdr';
+    var left=document.createElement('div'); left.className='hdr-left';
+    var name=document.createElement('span'); name.textContent=team.name;
+    left.appendChild(name);
+    var cnt=document.createElement('span'); cnt.className='countBig'; cnt.textContent=team.hand.length+' cards';
+    hdr.appendChild(left); hdr.appendChild(cnt);
+
+    var inner=document.createElement('div'); var topId=team.hand[0];
+
+    if(team.hand.length===0){
+      var back=document.createElement('div'); back.className='card-back'; back.textContent='Out'; inner.appendChild(back);
+    } else {
+      if(!revealed && idx!==activeTeam){
+        var back2=document.createElement('div'); back2.className='card-back';
+        back2.innerHTML='<div style="text-align:center;"><div style="font-size:24px;font-weight:900;">Shakespeare</div><div class="foot">Top Trumps</div></div>';
+        inner.appendChild(back2);
+      } else {
+        var c=deck[topId]; var card=document.createElement('div'); card.className='card';
+        var title=document.createElement('div'); title.className='card-title';
+        title.innerHTML='<span>'+c.name+'</span><span class="tag">'+c.set+'</span>';
+        var stats=document.createElement('div'); stats.className='stats';
+        for(var ki=0;ki<categoryKeys.length;ki++){
+          var key=categoryKeys[ki]; var st=statDiv(key, c.stats[key], idx===activeTeam && !revealed);
+          if(idx===activeTeam && !revealed){ (function(k,el){ el.onclick=function(){ selectCategory(k); }; })(key, st); }
+          if(chosenCategory===key) st.classList.add('active');
+          stats.appendChild(st);
+        }
+        var foot=document.createElement('div'); foot.className='foot';
+        foot.textContent = (!revealed ? (idx===activeTeam?'Tap a stat to choose':'Hidden until reveal') : '');
+        card.appendChild(title); card.appendChild(stats); card.appendChild(foot); inner.appendChild(card);
+      }
+    }
+
+    box.appendChild(hdr); box.appendChild(inner); teamsAreaEl.appendChild(box);
+  }
+}
+function renderScoreboard(){
+  scoreboardEl.innerHTML='';
+  for(var i=0;i<teams.length;i++){
+    var row=document.createElement('div'); row.className='scoreRow';
+    var left=document.createElement('div'); left.className='scoreLeft';
+    var sw=document.createElement('span'); sw.className='swatch'; sw.style.background=TILE_COLORS[i%TILE_COLORS.length];
+    var name=document.createElement('strong'); name.textContent=teams[i].name;
+    left.appendChild(sw); left.appendChild(name);
+    var right=document.createElement('div');
+    var cards=document.createElement('span'); cards.className='pill'; cards.textContent='Cards: '+teams[i].hand.length;
+    right.appendChild(cards);
+    row.appendChild(left); row.appendChild(right);
+    scoreboardEl.appendChild(row);
+  }
+}
+function renderAll(){ renderHUD(); renderTeams(); renderScoreboard(); revealBtn.disabled = !inPlay || !chosenCategory || revealed; nextBtn.disabled = !inPlay || !revealed; }
+
+/* Game control */
+function applyTeamCount(){
+  numTeams = parseInt(teamCountEl.value,10)||4; if(numTeams<2) numTeams=2; if(numTeams>6) numTeams=6; teamCountEl.value = String(numTeams);
+  while(teams.length<numTeams) teams.push({name:'Team '+(teams.length+1), hand:[]}); teams = teams.slice(0,numTeams);
+  rebuildTeamEditors();
+}
+function startGame(){
+  if(numTeams<2){alert('Need at least 2 teams');return;}
+  // build fresh teams from inputs
+  teams=[]; var inputs=teamEditEl.querySelectorAll('input');
+  for(var i=0;i<numTeams;i++){ var nm=inputs[i]?inputs[i].value:('Team '+(i+1)); teams.push({name:nm||('Team '+(i+1)), hand:[]}); }
+
+  // shuffle full deck (25), then set aside up to 1 unused card so deal is even
+  var ids=[]; for(var d=0; d<deck.length; d++) ids.push(deck[d]._id);
+  var shuffled=shuffle(ids);
+  var remainder = shuffled.length % numTeams; // with 25, remainder is 0 for 5 teams, else 1
+  var dealCount = shuffled.length - remainder; // leaves 0 or 1 unused
+  var dealIds = shuffled.slice(0, dealCount);
+  unused = shuffled.slice(dealCount); // 0 or 1 ids
+
+  // deal round-robin from dealIds (multiple of numTeams => equal hands)
+  for(var k=0;k<dealIds.length;k++){ teams[k % numTeams].hand.push(dealIds[k]); }
+
+  activeTeam=0; pot=[]; roundNum=1; revealed=false; chosenCategory=null; inPlay=true;
+  statusEl.style.display='none'; statusTieEl.style.display='none';
+  log('Game started with '+numTeams+' teams. Unused cards set aside: '+unused.length+'.');
+  renderAll();
+}
+function resetGame(){
+  // load 25-card default deck
+  deck=[]; for(var i=0;i<DEFAULT_DECK.length;i++){ var c=DEFAULT_DECK[i]; deck.push({ name:c.name, set:c.set, stats:c.stats, _id:i }); }
+  categoryKeys=Object.keys(deck[0].stats);
+  applyTeamCount();
+  activeTeam=0; pot=[]; roundNum=0; revealed=false; chosenCategory=null; inPlay=false; unused=[];
+  statusEl.style.display='none'; statusTieEl.style.display='none'; el('logBox').innerHTML=''; renderAll(); log('Reset complete. Deck size: '+deck.length+'.');
+}
+function nextRound(){
+  var alive=teams.filter(function(t){return t.hand.length>0;});
+  if(alive.length<=1){ inPlay=false; statusEl.style.display='block'; statusEl.textContent='🏁 Game Over! Winner: '+(alive[0]?alive[0].name:'—'); nextBtn.disabled=true; log('Game over.'); return; }
+  revealed=false; chosenCategory=null; statusEl.style.display='none'; statusTieEl.style.display='none'; roundNum++; renderAll();
+  log('Round '+roundNum+' started. Chooser: '+teams[activeTeam].name);
+}
+
+/* Round logic */
+function selectCategory(cat){
+  if(!inPlay || revealed) return;
+  chosenCategory = cat; log('Selected category: '+cat+'. Press “Reveal & Resolve”.'); renderAll();
+}
+function revealAndResolve(){
+  if(!inPlay || !chosenCategory || revealed) return;
+  revealed = true;
+
+  var plays = teams.map(function(t){ return t.hand.length ? t.hand[0] : null; });
+  var maxVal=-Infinity, winners=[];
+  for(var i=0;i<plays.length;i++){
+    var id=plays[i]; if(id==null) continue;
+    var val=deck[id].stats[chosenCategory];
+    if(val>maxVal){ maxVal=val; winners=[i]; } else if(val===maxVal){ winners.push(i); }
+  }
+  var roundCards=plays.filter(function(x){return x!=null;});
+
+  if(winners.length===1){
+    for(var t=0;t<teams.length;t++){ if(teams[t].hand.length) teams[t].hand.shift(); }
+    var w=winners[0]; var won=pot.concat(roundCards); pot=[];
+    teams[w].hand=teams[w].hand.concat(won);
+    activeTeam=w;
+    statusEl.style.display='block'; statusEl.textContent='✅ '+teams[w].name+' wins with highest '+chosenCategory+' ('+maxVal+').';
+    statusTieEl.style.display='none'; log(teams[w].name+' took '+won.length+' cards.');
+  } else {
+    for(var t2=0;t2<teams.length;t2++){ if(teams[t2].hand.length){ var top=teams[t2].hand.shift(); pot.push(top); } }
+    statusEl.style.display='none'; statusTieEl.style.display='block';
+    statusTieEl.textContent='🤝 Tie on '+chosenCategory+' (value '+maxVal+'). Cards → Pot. Same chooser next round.';
+    log('Tie. Pot now '+pot.length+' cards.');
+  }
+
+  renderAll();
+  // highlight winners for the chosen stat
+  var teamBoxes = el('teamsArea').children;
+  for(var ti=0; ti<teams.length; ti++){
+    if(!teamBoxes[ti]) continue;
+    var id=plays[ti]; if(id==null) continue;
+    var card = teamBoxes[ti].querySelector('.card'); if(!card) continue;
+    var cells = card.querySelectorAll('.stat');
+    for(var ci=0; ci<categoryKeys.length; ci++){
+      var key=categoryKeys[ci];
+      if(key===chosenCategory && winners.indexOf(ti)>-1){ cells[ci].classList.add('winner'); }
+    }
+  }
+
+  nextBtn.disabled=false;
+}
+
+/* Events */
+teamCountEl.onchange = function(){ applyTeamCount(); };
+decBtn.onclick = function(){ teamCountEl.value = String(Math.max(2, (parseInt(teamCountEl.value,10)||4) - 1)); applyTeamCount(); };
+incBtn.onclick = function(){ teamCountEl.value = String(Math.min(6, (parseInt(teamCountEl.value,10)||4) + 1)); applyTeamCount(); };
+
+randomBtn.onclick=function(){ TILE_COLORS = shuffle(TILE_COLORS); renderTeams(); renderScoreboard(); };
+startBtn.onclick=startGame; resetBtn.onclick=resetGame; nextBtn.onclick=nextRound; el('revealBtn').onclick=revealAndResolve;
+
+importBtn.onclick=function(){ fileInput.click(); };
+fileInput.onchange=function(e){
+  var f=e.target.files && e.target.files[0]; if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var arr=JSON.parse(reader.result);
+      if(!Array.isArray(arr) || !arr.length || !arr[0].stats) throw new Error('Invalid deck JSON');
+      deck=[]; for(var i=0;i<arr.length;i++){ deck.push({ name:arr[i].name, set:arr[i].set||'', stats:arr[i].stats, _id:i }); }
+      categoryKeys=Object.keys(deck[0].stats); buildCategoryButtons(); renderAll(); alert('Deck loaded. Press Start Game.');
+      log('Custom deck loaded ('+deck.length+' cards).');
+    }catch(err){ alert('Failed to import: '+err.message); }
+    fileInput.value='';
+  };
+  reader.readAsText(f);
+};
+
+/* Info modal */
+infoBtn.onclick = function(){ infoModal.classList.add('open'); infoModal.setAttribute('aria-hidden','false'); };
+infoClose.onclick = function(){ infoModal.classList.remove('open'); infoModal.setAttribute('aria-hidden','true'); };
+infoBackdrop.onclick = infoClose;
+
+/* Init */
+(function init(){
+  deck=[]; for(var i=0;i<DEFAULT_DECK.length;i++){ var c=DEFAULT_DECK[i]; deck.push({ name:c.name, set:c.set, stats:c.stats, _id:i }); }
+  categoryKeys=Object.keys(deck[0].stats);
+  // deck size is always 25 for default
+  el('deckSize').textContent = deck.length;
+  applyTeamCount();
+  // build category buttons
+  (function buildCats(){ var categoryButtonsEl=el('categoryButtons'); categoryButtonsEl.innerHTML=''; var keys=Object.keys(deck[0].stats);
+    keys.forEach(function(k){ var b=document.createElement('button'); b.textContent=k; b.onclick=function(){ selectCategory(k); }; categoryButtonsEl.appendChild(b); });
+  })();
+  rebuildTeamEditors();
+  log('Ready. Select team count & names, then Start Game.');
+})();
+</script>
+</body>
+</html>
